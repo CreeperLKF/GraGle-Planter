@@ -1,41 +1,14 @@
-# This is the readme file for project 'Gragle Planter'.
+from . import logger
+from .par import *
+import os, sys
 
-## Something...
+"""to resolve command lines"""
 
-I have little experience of releasing a project so the readme file maybe ugly, QWQ. Since some of the code was written years ago, it also seems ugly. It may also contain many bugs, but I will try to fix them.
-
-The part calculating token comes from a blog in baidu. However, since the original code was finished years ago, I can't find the original article or the original writer right now. I'm sorry for that, but I guess the original code might comes from "https://github.com/cocoa520/Google_TK".
-
-## What is Gragle Planter
-
-Gragle Planter is a tool to make your text grassy("生草").
-
-Why Google? Fly me to the moon!
-
-This is a program originally written to produce 'Autotune Remix' years ago, which originally can automatically translate a sentence into many languages and collect corresponding tts.
-
-Given that it is more and more popular to produce 'Autotune Remix', I add some functions to the program and now it can `Get the tts in different languages` with several additional functions(see help).
-
-## How to use
-
-### InputFile
-
-The text you want to plant grass (on)
-
-### OutputFile(s)
-
-The Grass-Planter will first create InputFile_output if it does not exist yet
-
-The it will cut the passage into sentences if you choose '-c' and plant grass in order. If the output language support tts, you will get x.mp3(tts result) and x.txt(translated text), otherwise x.txt only. x represents the order of the sentence.
-
-**Important:**`Please note that the Grass-Planter will not recreate txts, which means if x.txt exists, the Grass-Planter will not plant grass again. So you stopped the Grass-Planter forcely last time, I recommend you check the integrity of the lastest txt file in case of incomplete output file`
-
-**If you use the python source code, PyExecJS is required.**
-**pydub is only required when -m is on**
-
-Use `python ggp.py -h` or `ggp.exe` to get help text or read text below(Assuming ggp.py or ggp.exe is the Grass-Planter and you want to plant grass for InputFile)
-
-```
+def printHelp():
+    
+    """imitated from the manual of python (:XD"""
+    
+    content = """
 NAME
     Gragle Planter - or Grassy Google Planter : to make your text grassy (Plant grass (Chinglish) / 生草)
 
@@ -68,7 +41,7 @@ COMMAND LINE OPTIONS
     -o language
         Set output language, otherwise zh-CN by default
         if the output language is not available in tts, only translation will be output
-        "ran" is allowed (see description in -l), but only generate tts available language
+        "ran" is allowed (see description in -l), but only generate tts available language 
     -t times
         Set iteration times, 0 for just tts(), 
         1 for one iteration time(e.g. zh-CN -> en -> zh-CN) and so on,
@@ -122,4 +95,58 @@ AUTHOR
     CreeperLKF on Github
 LICENSE
     GPLv3 Licensed(https://www.gnu.org/licenses/gpl-3.0.html)
-```
+    """
+    print(content)
+
+def resolveCommandLine():
+
+    """Resolve command lines inputed"""
+
+    # not been tested under Windows or Linux executable file
+
+    print(sys.argv)
+
+    if len(sys.argv) < 2 or "-h" in sys.argv or "-?" in sys.argv:
+        printHelp()
+        return "Help Printed"
+    if not os.path.isfile(sys.argv[1]):
+        return "Grass Maker cannot find the file specified."
+    
+    ret = {"filename" : sys.argv[1], "cut" : False, "input" : "auto",\
+        "output" : "zh-CN", "chain" : [], "merge" : False}
+
+    if "-c" in sys.argv:
+        ret["cut"] = '。' if not sys.argv.index("-c") == len(sys.argv)\
+            else sys.argv[sys.argv.index("-c") + 1]
+    
+    if "-i" in sys.argv:
+        ret["input"] = sys.argv[sys.argv.index("-i") + 1]
+        if not (ret["input"] in availableTranslationLanguage or ret["input"] == 'auto'):
+            return "You Choose -i with unsupported language specified"
+    
+    if "-o" in sys.argv:
+        ret["output"] = sys.argv[sys.argv.index("-o") + 1]
+        if not (ret["output"] in availableTranslationLanguage or ret["output"] == "ran"):
+            return "You Choose -o with unsupported language specified('auto' is not allowed)"
+    
+    if "-t" in sys.argv:
+        ret["times"] = int(sys.argv[sys.argv.index("-t") + 1])
+        if ret["times"] < 0:
+            return "Is your time lost?"
+        elif ret["times"]:
+            ret["chain"] = ["ran"] * ret["times"]
+    
+    if (not ret["chain"]) and "-l" in sys.argv:
+        ret["chain"] = eval("['" + sys.argv[sys.argv.index("-l") + 1].replace(",", "','") + "',]")
+        for tar in ret["chain"]:
+            if not tar in availableTranslationLanguage:
+                return "A language in chain is unsupported('auto' is not allowed)"
+    
+    if "-m" in sys.argv:
+        ret["merge"] = True
+    
+    return ret    
+
+if __name__ == "__main__":
+    # This print debug information using return value
+    logger.log(resolveCommandLine(), doTellUser=True)
